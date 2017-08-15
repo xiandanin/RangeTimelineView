@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center_vertical"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!--<com.dyhdyh.rangetimelineview.VideoRangeSeekBar
+            android:id="@+id/vrsb"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_marginBottom="40dp"
+            android:visibility="visible" />-->
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <com.dyhdyh.view.rangetimelineview.RangeTimelineView
+            android:id="@+id/rtv"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:visibility="visible"
+            app:borderColor="@android:color/holo_green_dark"
+            app:maxRangeWidth="250dp"
+            app:minRangeWidth="100dp"
+            app:rangeEndX="100dp"
+            app:rangeStartX="10dp" />
+    </LinearLayout>
+
+</LinearLayout>

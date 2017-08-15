@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="RangeTimelineView">
+        <attr name="minRangeWidth" format="dimension"></attr>
+        <attr name="maxRangeWidth" format="dimension"></attr>
+        <attr name="borderWidth" format="dimension"></attr>
+        <attr name="indicatorWidth" format="dimension"></attr>
+
+        <attr name="rangeStartX" format="dimension"></attr>
+        <attr name="rangeEndX" format="dimension"></attr>
+
+        <attr name="timelineColor" format="color"></attr>
+        <attr name="borderColor" format="color"></attr>
+        <attr name="indicatorColor" format="color"></attr>
+        <attr name="dragEnabled" format="boolean"></attr>
+    </declare-styleable>
+</resources>

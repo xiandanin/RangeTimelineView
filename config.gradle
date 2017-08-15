@@ -1,0 +1,33 @@
+ext {
+    android =
+            [
+                    versionCode      : 1,
+                    versionName      : "1.0.0",
+
+                    compileSdkVersion: 25,
+                    buildToolsVersion: "25.0.2",
+                    minSdkVersion    : 14,
+                    targetSdkVersion : 25,
+                    supportVersion   : "25.3.0",
+            ]
+
+    jcenter =
+            [
+                    //项目名称
+                    name       : "RangeTimelineView",
+                    groupId    : "com.dyhdyh.view",
+                    //项目地址
+                    siteUrl    : "https://github.com/dengyuhan/RangeTimelineView",
+                    //项目git地址
+                    gitUrl     : "https://github.com/dengyuhan/RangeTimelineView.git",
+                    //许可证
+                    description: "Android范围选择器",
+                    licenses   : "Apache-2.0",
+                    //开发者的一些基本信息
+                    authorId   : "dengyuhan",
+                    authorName : "dengyuhan",
+                    authorEmail: "22309946@qq.com",
+            ]
+
+
+}
