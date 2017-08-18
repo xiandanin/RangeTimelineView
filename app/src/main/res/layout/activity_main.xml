@@ -27,7 +27,10 @@
         <com.dyhdyh.view.rangetimelineview.RangeTimelineView
             android:id="@+id/rtv"
             android:layout_width="match_parent"
+            android:paddingLeft="20dp"
+            android:paddingRight="20dp"
             android:layout_height="40dp"
+            app:debug="true"
             android:visibility="visible"
             app:borderColor="@android:color/holo_green_dark"
             app:maxRangeWidth="250dp"

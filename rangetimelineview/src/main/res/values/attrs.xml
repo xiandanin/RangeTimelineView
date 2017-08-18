@@ -13,5 +13,8 @@
         <attr name="borderColor" format="color"></attr>
         <attr name="indicatorColor" format="color"></attr>
         <attr name="dragEnabled" format="boolean"></attr>
+
+        <attr name="touchOffsetScale" format="float"></attr>
+        <attr name="debug" format="boolean"></attr>
     </declare-styleable>
 </resources>

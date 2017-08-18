@@ -16,7 +16,9 @@ import android.view.View;
  * created 2017/8/10 15:28
  */
 public class RangeTimelineView extends View {
-    private boolean mDebug = true;
+    private boolean mDebug = false;
+
+    private float mTouchOffsetScale;//触摸容错比例
 
     private int mTimelineColor;
     private int mBorderColor;
@@ -46,7 +48,11 @@ public class RangeTimelineView extends View {
     private boolean mLeftTouch;
     private boolean mRightTouch;
 
+    private int mTargetStartX;//目标开始X
+    private int mTargetEndX;//目标结束X
+
     private OnRangeChangeListener mOnRangeChangeListener;
+    private OnRangeChangeStateListener mOnRangeChangeStateListener;
 
     public RangeTimelineView(Context context) {
         this(context, null);
@@ -77,6 +83,8 @@ public class RangeTimelineView extends View {
         mTimelineColor = a.getColor(R.styleable.RangeTimelineView_timelineColor, 0x99000000);
         mBorderColor = a.getColor(R.styleable.RangeTimelineView_borderColor, mIndicatorColor);
         mDragEnabled = a.getBoolean(R.styleable.RangeTimelineView_dragEnabled, true);
+        mDebug = a.getBoolean(R.styleable.RangeTimelineView_debug, false);
+        mTouchOffsetScale = a.getFloat(R.styleable.RangeTimelineView_touchOffsetScale, 3.0f);
         a.recycle();
         mPaint = new Paint();
         mPaint.setAntiAlias(true);
@@ -92,37 +100,68 @@ public class RangeTimelineView extends View {
         } else {
             setMeasuredDimension(measureWidth, measureHeight);
         }
+        //Log.d("onMeasure------>", measureWidth + "," + getWidth() + "," + getMeasuredWidth());
+        //regulateAttribute();
+    }
+
+    /**
+     * 校正
+     */
+    private void regulateAttribute() {
+        //Log.d("1----------->", startX + "," + endX);
+
+        int startX = mTargetStartX;
+        int endX = mTargetEndX;
 
         int measuredWidth = getMeasuredWidth();
+
+        //Log.d("1--->", startX + "," + endX + "," + measuredWidth + "," + mMaxRangeWidth);
+
         if (mMaxRangeWidth <= 0) {
             mMaxRangeWidth = measuredWidth;
         }
-        mMaxRangeEndX = mRangeStartX + mMaxRangeWidth;
-        if (mMaxRangeEndX >= measuredWidth) {
+
+        if (startX < 0) {
+            //指示器到达最小边界
+            startX = 0;
+            endX = mRangeEndX;
+        }
+
+        int maxRangeEndX = startX + mMaxRangeWidth;
+
+        //Log.d("2--->", startX + "," + endX + "," + measuredWidth + "," + mMaxRangeWidth);
+
+        if (maxRangeEndX >= measuredWidth) {
             //外框到达最大边界
-            mMaxRangeEndX = measuredWidth;
+            maxRangeEndX = measuredWidth;
         }
 
-        int minRangeEndX = mRangeStartX + mMinRangeWidth;
-        if (mRangeEndX >= mMaxRangeEndX) {
+        int minRangeEndX = startX + mMinRangeWidth;
+
+        //Log.d("3--->", startX + "," + endX + "," + measuredWidth + "," + mMaxRangeWidth + "," + minRangeEndX);
+
+        if (endX > maxRangeEndX) {
             //指示器到达最大边界
-            mRangeEndX = mMaxRangeEndX;
-        } else if (mRangeEndX <= minRangeEndX) {
-            mRangeEndX = minRangeEndX;
+            endX = maxRangeEndX;
+            startX = mRangeStartX;
+        } else if (endX <= minRangeEndX) {
+            endX = minRangeEndX;
         }
 
-        int minRangeStartX = mRangeEndX - mMinRangeWidth;
-        if (mRangeStartX >= minRangeStartX) {
+        int minRangeStartX = endX - mMinRangeWidth;
+
+        //Log.d("4--->", startX + "," + endX + "," + measuredWidth + "," + mMaxRangeWidth + "," + minRangeEndX + "," + minRangeStartX + "," + mMinRangeWidth);
+
+        if (startX >= minRangeStartX) {
             //指示器到达最小边界
-            mRangeStartX = minRangeStartX;
+            startX = minRangeStartX;
         }
+        //Log.d("5--->", startX + "," + endX + "," + measuredWidth + "," + mMaxRangeWidth + "," + minRangeEndX + "," + minRangeStartX + "," + mMinRangeWidth);
 
-        if (mRangeStartX <= 0) {
-            //指示器到达最小边界
-            mRangeStartX = 0;
-        }
-
+        this.mRangeStartX = startX;
+        this.mRangeEndX = endX;
         this.mRangeWidth = mRangeEndX - mRangeStartX;
+        this.mMaxRangeEndX = maxRangeEndX;
     }
 
     @Override
@@ -168,7 +207,7 @@ public class RangeTimelineView extends View {
         if (event.getAction() == MotionEvent.ACTION_MOVE
                 || event.getAction() == MotionEvent.ACTION_DOWN) {
             float eventX = event.getX();
-            int offsetX = mIndicatorWidth * 3;//触摸容错值
+            int offsetX = (int) (mIndicatorWidth * mTouchOffsetScale);//触摸容错值
             mLeftTouchStartX = mRangeStartX - offsetX;
             mLeftTouchEndX = mRangeStartX + mIndicatorWidth + offsetX;
             mRightTouchEndX = mRangeEndX + offsetX;
@@ -179,27 +218,38 @@ public class RangeTimelineView extends View {
                 //如果触摸在左边矩形 范围
                 //LogUtil.d("---------->左边");
                 mLeftTouch = true;
-                setTouchRange((int) eventX, mRangeEndX);
+                setTouchRange((int) eventX, mRangeEndX, false);
                 return true;
             } else if (eventX >= mRightTouchStartX && eventX <= mRightTouchEndX && !mLeftTouch) {
                 //如果触摸在右边矩形 范围
                 //LogUtil.d("---------->右边");
                 mRightTouch = true;
-                setTouchRange(mRangeStartX, (int) eventX);
+                setTouchRange(mRangeStartX, (int) eventX, false);
                 return true;
             }
         } else {
-            mLeftTouch = false;
-            mRightTouch = false;
+            callComplete();
         }
         return super.onTouchEvent(event);
+    }
+
+    private void callComplete() {
+        mLeftTouch = false;
+        mRightTouch = false;
+        if (mOnRangeChangeStateListener != null) {
+            mOnRangeChangeStateListener.onRangeChangeState(OnRangeChangeStateListener.STATE_COMPLETE);
+        }
     }
 
     public void setDragEnabled(boolean dragEnabled) {
         this.mDragEnabled = dragEnabled;
     }
 
-    private void setTouchRange(int startX, int endX) {
+    public void scrollRange(int startX, int endX) {
+        setTouchRange(startX, endX, true);
+    }
+
+    private void setTouchRange(int startX, int endX, boolean callComplete) {
         int newRangeWidth = endX - startX;
         int diffStartX = startX - mRangeStartX;
         if (newRangeWidth <= mMinRangeWidth) {
@@ -223,18 +273,28 @@ public class RangeTimelineView extends View {
                 endX = startX + mMaxRangeWidth;
             }
         }
-        setRange(startX, endX);
+        if (mOnRangeChangeStateListener != null) {
+            mOnRangeChangeStateListener.onRangeChangeState(OnRangeChangeStateListener.STATE_CHANGE);
+        }
+        callRange(startX, endX, callComplete);
     }
 
-    public void setRange(int startX, int endX) {
-        this.mRangeStartX = startX;
-        this.mRangeEndX = endX;
-        this.mRangeWidth = mRangeEndX - mRangeStartX;
-        requestLayout();
-        invalidate();
-        if (mOnRangeChangeListener != null) {
-            mOnRangeChangeListener.onRangeChange(mRangeWidth, mRangeStartX, mRangeEndX);
-        }
+    private void callRange(int startX, int endX, final boolean callComplete) {
+        mTargetStartX = startX;
+        mTargetEndX = endX;
+        post(new Runnable() {
+            @Override
+            public void run() {
+                regulateAttribute();
+                invalidate();
+                if (mOnRangeChangeListener != null) {
+                    mOnRangeChangeListener.onRangeChange(mRangeWidth, mRangeStartX, mRangeEndX);
+                }
+                if (callComplete) {
+                    callComplete();
+                }
+            }
+        });
     }
 
     public void setMinRangeWidth(int minRangeWidth) {
@@ -251,6 +311,10 @@ public class RangeTimelineView extends View {
 
     public void setOnRangeChangeListener(OnRangeChangeListener onRangeChangeListener) {
         this.mOnRangeChangeListener = onRangeChangeListener;
+    }
+
+    public void setOnRangeChangeStateListener(OnRangeChangeStateListener onRangeChangeStateListener) {
+        this.mOnRangeChangeStateListener = onRangeChangeStateListener;
     }
 
     public void setDebug(boolean debug) {
@@ -275,11 +339,58 @@ public class RangeTimelineView extends View {
         return mRangeEndX;
     }
 
+    public int getTimelineColor() {
+        return mTimelineColor;
+    }
+
+    public void setTimelineColor(int timelineColor) {
+        this.mTimelineColor = timelineColor;
+    }
+
+    public int getBorderColor() {
+        return mBorderColor;
+    }
+
+    public void setBorderColor(int borderColor) {
+        this.mBorderColor = borderColor;
+    }
+
+    public int getIndicatorColor() {
+        return mIndicatorColor;
+    }
+
+    public void setIndicatorColor(int indicatorColor) {
+        this.mIndicatorColor = indicatorColor;
+    }
+
+    public int getBorderWidth() {
+        return mBorderWidth;
+    }
+
+    public void setBorderWidth(int borderWidth) {
+        this.mBorderWidth = borderWidth;
+    }
+
+    public int getIndicatorWidth() {
+        return mIndicatorWidth;
+    }
+
+    public void setIndicatorWidth(int indicatorWidth) {
+        this.mIndicatorWidth = indicatorWidth;
+    }
+
     /**
      * 范围改变监听(具体数值)
      */
     public interface OnRangeChangeListener {
         void onRangeChange(int rangeWidth, int rangeStartX, int rangeEndX);
+    }
+
+    public interface OnRangeChangeStateListener {
+        int STATE_CHANGE = 0;
+        int STATE_COMPLETE = 1;
+
+        void onRangeChangeState(int state);
     }
 
 }

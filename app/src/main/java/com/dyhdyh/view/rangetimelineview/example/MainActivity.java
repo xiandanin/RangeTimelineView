@@ -14,5 +14,12 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         rtv = (RangeTimelineView) findViewById(R.id.rtv);
+
+        rtv.setOnRangeChangeListener(new RangeTimelineView.OnRangeChangeListener() {
+            @Override
+            public void onRangeChange(int rangeWidth, int rangeStartX, int rangeEndX) {
+
+            }
+        });
     }
 }
